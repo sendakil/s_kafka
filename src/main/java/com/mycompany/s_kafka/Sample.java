@@ -17,7 +17,7 @@ public class Sample {
     public static void main(String[] args) {
         // TODO code application logic here
         System.out.println(" Welcome!");
-        System.out.println(" To the world of Kafka");
+        System.out.println(" To the world of Kafka -linux");
     }
     
 }
