@@ -17,6 +17,7 @@ import com.twitter.hbc.core.endpoint.StatusesFilterEndpoint;
 import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -37,11 +38,11 @@ import org.slf4j.LoggerFactory;
  */
 public class TwitterProducer {
     
-    String consumerkey="GGqICzo4vqELlFri3QRxMEQVJ";
-    String consumersecret="AF3nECcBHyHuEe2CgCkQPWhHDXe9dYY0CRu51u9gUDY5087Lhg";
-    String token="244175665-DsnldAmpjVC3OddyGp8FQbY3A95ffHxz722g9iqU";
-    String secret="3ekCpiOWCBic1wbv6SeeHmXH6k84z9dB4E6T9Xl8gfPbk"; 
-    List<String> terms = Lists.newArrayList("#kafkatest");
+    String consumerkey="zzzz";
+    String consumersecret="Azzzz";
+    String token="zzz";
+    String secret="Fzz"; 
+    List<String> terms = Lists.newArrayList("dhanush","bitcoin","vijay");
     Logger logger= LoggerFactory.getLogger(ConsumerDemoGroups.class.getName());
     
     
@@ -49,8 +50,6 @@ public class TwitterProducer {
     
     public static void main(String[] args) throws InterruptedException {
         new TwitterProducer().run();
-        
-        
     }
     
     public void run() throws InterruptedException{
@@ -65,6 +64,16 @@ public class TwitterProducer {
         
         // create a kafka producer
         KafkaProducer<String, String> producer = createKafkaProducer();
+        
+        // add a shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread( ()-> {
+        logger.info("Stopping application..");
+        logger.info("Shutting down client from twitter...");
+        client.stop();
+        logger.info("Closing producer..");
+        producer.close();
+        logger.info("done!");
+    }));
         
         // loop to send tweets to kafka
         // on a different thread, or multiple different threads....
@@ -128,6 +137,19 @@ public class TwitterProducer {
         properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapservers);
         properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,StringSerializer.class.getName());
         properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,StringSerializer.class.getName());
+        
+        // create safe producer
+        properties.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG,"true");
+        properties.setProperty(ProducerConfig.ACKS_CONFIG,"all");
+        properties.setProperty(ProducerConfig.RETRIES_CONFIG,Integer.toString(Integer.MAX_VALUE));
+        properties.setProperty(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION,"5");
+        
+        // high throughput producer (at the expense of a bit of latency and CPU usage)
+        properties.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG,"snappy");
+        properties.setProperty(ProducerConfig.LINGER_MS_CONFIG,"20");
+        properties.setProperty(ProducerConfig.BATCH_SIZE_CONFIG,Integer.toString(32*1024)); // 32 KB Batch size
+
+        
         // create the producer
         KafkaProducer<String, String> producer=new  KafkaProducer<String, String>(properties);
         return producer;
