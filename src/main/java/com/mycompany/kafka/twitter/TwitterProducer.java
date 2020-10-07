@@ -42,6 +42,9 @@ public class TwitterProducer {
     String consumersecret="Azzzz";
     String token="zzz";
     String secret="Fzz"; 
+    
+     
+    
     List<String> terms = Lists.newArrayList("dhanush","bitcoin","vijay");
     Logger logger= LoggerFactory.getLogger(ConsumerDemoGroups.class.getName());
     
