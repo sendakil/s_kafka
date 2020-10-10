@@ -74,7 +74,7 @@ public class ElasticSearchConsumer {
         Properties properties = new Properties();
         String bootstrapservers="127.0.0.1:9092";
         String groupid="kafka-demo-elasticsearch1";
-       //String topic = "twitter_tweets";
+        //String topic = "twitter_tweets";
         
         // create consumer configs
         
@@ -83,8 +83,10 @@ public class ElasticSearchConsumer {
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG,groupid);
         properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"earliest");
-          
-        // create consumer
+        properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"); // Disable  auto commit offset
+        properties.setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "20");
+        
+// create consumer
         
         KafkaConsumer<String, String> consumer = new KafkaConsumer<> (properties);
         consumer.subscribe(Arrays.asList(topic));
@@ -103,7 +105,11 @@ public class ElasticSearchConsumer {
         
             while(true){
                 ConsumerRecords<String, String> records=consumer.poll(Duration.ofMillis(100));
-
+                
+                logger.info("Received "+ records.count() +"records");
+                
+               // BulkRequest bulkrequest = new BulkRequest();
+                
                 for (ConsumerRecord<String,String> record: records){
                     // 2 Strategies 
                     // kafka_generic id
@@ -116,19 +122,25 @@ public class ElasticSearchConsumer {
                     // where we insert data into Elasticsearch
                      IndexRequest indexrequest= new IndexRequest("twitter","tweets",id)
                     .source(record.value(),XContentType.JSON);
-             
+                     //bulkrequest.add(indexrequest);
                     
                      IndexResponse indexresponse=client.index(indexrequest, RequestOptions.DEFAULT);
                      logger.info(indexresponse.getId());
                    
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(10);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-
-                                   
+                logger.info("Committing offsets..");
+                consumer.commitSync();
+                logger.info("Offsets have been committed") ;
+                try{
+                    Thread.sleep(1000);
+                } catch (InterruptedException e){
+                    e.printStackTrace();
+                }
             // close the client gracefully
            //  client.close();
         }
