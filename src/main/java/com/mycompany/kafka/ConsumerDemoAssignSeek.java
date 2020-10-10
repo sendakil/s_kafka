@@ -32,13 +32,16 @@ public class ConsumerDemoAssignSeek {
         Properties properties = new Properties();
         String bootstrapservers="127.0.0.1:9092";
         String topic = "first_topic";
+        //String groupid="my-10th-application";
         
         // create consumer configs
         
         properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapservers);
         properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,StringDeserializer.class.getName());
-              properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"earliest");
+       // properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG,groupid);
+        properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"earliest");
+     
           
         // create consumer
         
@@ -66,6 +69,7 @@ public class ConsumerDemoAssignSeek {
         while(keepOnReading){
             ConsumerRecords<String, String> records=consumer.poll(Duration.ofMillis(100));
             
+
             for (ConsumerRecord<String,String> record: records){
                 numberOfMessagesReadSofar +=1;
                 logger.info("Key: "+ record.key()+ ", Value:" + record.value());
